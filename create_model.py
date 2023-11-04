@@ -90,6 +90,8 @@ def evaluate(model, val_loader):
 def fit(epochs, lr, model, train_loader, val_loader, opt_func=torch.optim.SGD):
     history = []
     optimizer = opt_func(model.parameters(), lr)
+
+    early_stopper = EarlyStopper(patience=3, min_delta=10)
     for epoch in range(epochs):
         # Training Phase 
         model.train()
@@ -105,23 +107,41 @@ def fit(epochs, lr, model, train_loader, val_loader, opt_func=torch.optim.SGD):
         result['train_loss'] = torch.stack(train_losses).mean().item()
         model.epoch_end(epoch, result)
         history.append(result)
+        if early_stopper.early_stop(result['val_loss']):
+            return history
     return history
 
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = float('inf')
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+    
 # Plot train result
 def plot_accuracies(history):
     accuracies = [x['val_acc'] for x in history]
     plt.plot(accuracies, '-x')
     plt.xlabel('epoch')
     plt.ylabel('accuracy')
-    plt.title('Accuracy vs. No. of epochs');
+    plt.title('Accuracy vs. No. of epochs')
 
 
 
 # Importing training data
-data_dir  = '/to/be/determined' # Add later
+data_dir  = '/data' 
 
 classes = os.listdir(data_dir) # assuming that directories/folder names are labels
-print(classes) # classes = ["compost", "waste", "recycling"]
 
 transformations = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
 
@@ -131,11 +151,7 @@ dataset = ImageFolder(data_dir, transform = transformations)
 random_seed = 42
 torch.manual_seed(random_seed)
 
-len_train_ds = 0 # Add later
-len_val_ds = 0 # Add later
-len_test_ds = 0 #  Add later
-
-train_ds, val_ds, test_ds = random_split(dataset, [len_train_ds, len_val_ds, len_test_ds])
+train_ds, val_ds, test_ds = random_split(dataset, [0.6, 0.2, 0.2])
 
 # Training and validation dataloaders
 batch_size = 32
@@ -151,7 +167,7 @@ val_dl = DeviceDataLoader(val_dl, device)
 
 # Training the model
 model = to_device(ResNet(), device)
-num_epochs = 0 # Add later
+num_epochs = 100
 opt_func = torch.optim.Adam
 lr = 5.5e-5
 
@@ -161,4 +177,4 @@ history = fit(num_epochs, lr, model, train_dl, val_dl, opt_func)
 plot_accuracies(history)
 
 # Save model
-torch.save(model, 'save/to/path/model.pt') # Add later
+torch.save(model, 'model.pt')
