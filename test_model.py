@@ -11,15 +11,10 @@ from torchvision.datasets import ImageFolder
 # Load in model
 loaded_model = torch.load('model.pt')
 
-data_dir  = 'data/' 
-
-classes = os.listdir(data_dir) # assuming that directories/folder names are labels
+classes = ['compost', 'non_disposable', 'recycle', 'trash'] # assuming that directories/folder names are labels
 
 transformations = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
 
-dataset = ImageFolder(data_dir, transform = transformations)
-
-device = create_model.get_default_device()
 
 def to_device(data, device):
     """Move tensor(s) to chosen device"""
@@ -30,13 +25,13 @@ def to_device(data, device):
 # External prediction
 def predict_image(img, model):
     # Convert to a batch of 1
-    xb = to_device(img.unsqueeze(0), device)
+    xb = to_device(img.unsqueeze(0), 'cpu')
     # Get predictions from model
     yb = model(xb)
     # Pick index with highest probability
     prob, preds  = torch.max(yb, dim=1)
     # Retrieve the class label
-    return dataset.classes[preds[0].item()]
+    return classes[preds[0].item()]
 
 def predict_external_image(image_name):
     image = Image.open(Path('./' + image_name))
@@ -46,4 +41,4 @@ def predict_external_image(image_name):
     print("The image resembles", predict_image(example_image, loaded_model) + ".")
 
 if __name__ == "__main__":
-    predict_external_image('battery1.jpg') 
+    predict_external_image('IMG_3274.jpg') 
