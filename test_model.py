@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
-import hackXtrash.create_model as create_model 
+import create_model as create_model
 
 # Load in model
 loaded_model = torch.load('model.pt')
@@ -32,4 +32,5 @@ def predict_external_image(image_name):
     plt.imshow(example_image.permute(1, 2, 0))
     print("The image resembles", predict_image(example_image, loaded_model) + ".")
 
-predict_external_image('test_img.jpg') 
+if __name__ == "__main__":
+    predict_external_image('biological97.jpg') 

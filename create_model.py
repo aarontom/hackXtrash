@@ -8,6 +8,8 @@ from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from torch.utils.data.dataloader import DataLoader
+from PIL import Image
+from pathlib import Path
 
 # Model base
 def accuracy(outputs, labels):
@@ -136,45 +138,83 @@ def plot_accuracies(history):
     plt.ylabel('accuracy')
     plt.title('Accuracy vs. No. of epochs')
 
+def testingModel(photoPath):
+    # Load in model
+    loaded_model = torch.load('model.pt')
 
+    def to_device(data, device):
+        """Move tensor(s) to chosen device"""
+        if isinstance(data, (list,tuple)):
+            return [to_device(x, device) for x in data]
+        return data.to(device, non_blocking=True)
 
+    # External prediction
+    def predict_image(img, model):
+        # Convert to a batch of 1
+        xb = to_device(img.unsqueeze(0), device)
+        # Get predictions from model
+        yb = model(xb)
+        # Pick index with highest probability
+        prob, preds  = torch.max(yb, dim=1)
+        # Retrieve the class label
+        return dataset.classes[preds[0].item()]
+
+    def predict_external_image(image_name):
+        image = Image.open(Path('./' + image_name))
+
+        example_image = transformations(image)
+        plt.imshow(example_image.permute(1, 2, 0))
+        print("The image resembles", predict_image(example_image, loaded_model) + ".")
+
+    predict_external_image(f'{photoPath}.jpg') 
+    
+    
+def trainModel():
+    # Training the model
+    model = to_device(ResNet(), device)
+    num_epochs = 100
+    opt_func = torch.optim.Adam
+    lr = 5.5e-5
+
+    history = fit(num_epochs, lr, model, train_dl, val_dl, opt_func)
+
+    # Testing
+    plot_accuracies(history)
+    # Save model
+    torch.save(model, 'model.pt')
+    
 # Importing training data
-data_dir  = '/data' 
+if __name__ == "__main__":
+    data_dir  = 'data/' 
 
-classes = os.listdir(data_dir) # assuming that directories/folder names are labels
+    classes = os.listdir(data_dir) # assuming that directories/folder names are labels
 
-transformations = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
+    transformations = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
 
-dataset = ImageFolder(data_dir, transform = transformations)
+    dataset = ImageFolder(data_dir, transform = transformations)
 
-# Load and split data
-random_seed = 42
-torch.manual_seed(random_seed)
+    # Load and split data
+    random_seed = 42
+    torch.manual_seed(random_seed)
 
-train_ds, val_ds, test_ds = random_split(dataset, [0.6, 0.2, 0.2])
+    train_ds, val_ds, test_ds = random_split(dataset, [0.6, 0.2, 0.2])
 
-# Training and validation dataloaders
-batch_size = 32
-train_dl = DataLoader(train_ds, batch_size, shuffle = True, num_workers = 4, pin_memory = True)
-val_dl = DataLoader(val_ds, batch_size*2, num_workers = 4, pin_memory = True)
+    # Training and validation dataloaders
+    batch_size = 32
+    train_dl = DataLoader(train_ds, batch_size, shuffle = True, num_workers = 0, pin_memory = True)
+    val_dl = DataLoader(val_ds, batch_size*2, num_workers = 0, pin_memory = True)
 
-# Create model
-model = ResNet()
+    # Create model
+    model = ResNet()
 
-device = get_default_device()
-train_dl = DeviceDataLoader(train_dl, device)
-val_dl = DeviceDataLoader(val_dl, device)
+    device = get_default_device()
+    train_dl = DeviceDataLoader(train_dl, device)
+    val_dl = DeviceDataLoader(val_dl, device)
 
-# Training the model
-model = to_device(ResNet(), device)
-num_epochs = 100
-opt_func = torch.optim.Adam
-lr = 5.5e-5
+    testingModel('IMG_3262')
 
-history = fit(num_epochs, lr, model, train_dl, val_dl, opt_func)
 
-# Testing
-plot_accuracies(history)
+    
+    
 
-# Save model
-torch.save(model, 'model.pt')
+    
