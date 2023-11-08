@@ -140,7 +140,7 @@ def plot_accuracies(history):
     
 # Importing training data
 if __name__ == "__main__":
-    data_dir  = 'data/' 
+    data_dir  = '../data/' 
 
     classes = os.listdir(data_dir) # assuming that directories/folder names are labels
 

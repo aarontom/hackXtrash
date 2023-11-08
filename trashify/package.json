@@ -11,13 +11,12 @@
     "expo-status-bar": "~1.4.4",
     "react": "18.2.0",
     "react-native": "0.71.14",
-    "expo-camera": "~13.2.1",
-    "@types/react": "17.0.0",
-    "@material-ui/core": "*",
-    "@expo/vector-icons": "^13.0.0",
-    "@material-ui/icons": "*",
     "react-native-paper": "4.9.2",
-    "react-native-camera": "*"
+    "@expo/vector-icons": "^13.0.0",
+    "react-native-camera": "*",
+    "@material-ui/core": "*",
+    "@types/react": "17.0.0",
+    "@material-ui/icons": "4.11.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

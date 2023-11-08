@@ -41,5 +41,6 @@ def predict_external_image(image_name):
     print(f"image {image_name} resembles", predict_image(example_image, loaded_model) + ".")
 
 if __name__ == "__main__":
-    predict_external_image('IMG_3274.jpg') 
-    predict_external_image('IMG_3276.jpg') 
+    print()
+    predict_external_image('IMG_3280.jpg') 
+    print()
